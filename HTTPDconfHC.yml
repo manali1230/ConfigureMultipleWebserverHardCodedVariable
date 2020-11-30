@@ -1,0 +1,52 @@
+- hosts: all
+  vars_files: 
+  -  var_file.yml
+  tasks:
+  -  file:
+       state: directory
+       path: "{{foldername}}"
+
+  - mount:
+      src: "/dev/cdrom"
+      path: "{{foldername}}"
+      state: mounted
+      fstype: "iso9660"
+
+  - yum_repository:
+      baseurl: "{{foldername}}/AppStream"
+      name: "myappstream"
+      description: "My AppStream Packages"
+      gpgcheck: no
+
+  - yum_repository:
+      baseurl: "{{foldername}}/BaseOS"
+      name: "myBaseOS"
+      description: "My BaseOS Packages"
+      gpgcheck: no
+
+  - package:
+      name: "httpd"
+      state: present
+
+  - template:
+      dest: "/etc/httpd/conf.d/configurefile.conf"
+      src: "configurefile.conf"
+
+  -  file:
+       state: directory
+       path: "/var/www/{{confdirectory}}"
+
+  - template:
+      dest: "/var/www/{{confdirectory}}/index.html"
+      src: "index.html"
+
+  - service:
+      name: "httpd"
+      state: restarted
+      enabled: yes
+
+  - firewalld:
+      port: "{{portno}}/tcp"
+      state: enabled
+      permanent: yes
+      immediate: yes
